@@ -23,7 +23,7 @@ def Main():
             MyPuzzle = Puzzle(Filename + ".txt")
         else:
             MyPuzzle = Puzzle(8, int(8 * 8 * 0.6))
-        Score = MyPuzzle.AttemptPuzzle()
+        Score = MyPuzzle.AttemptPuzzle(Filename)
         print("Puzzle finished. Your score was: " + str(Score))
         Again = input("Do another puzzle? ").lower()
 
@@ -111,7 +111,7 @@ class Puzzle():
         except:
             print("Puzzle not loaded")
 
-    def AttemptPuzzle(self):
+    def AttemptPuzzle(self, Filename):
         """
         Game loop for inputting symbols into the puzzle
         Runs while the game has not finished
@@ -124,6 +124,8 @@ class Puzzle():
         while not Finished:
             self.DisplayPuzzle()
             print("Current score: " + str(self.__Score))
+            initialScore = self.__Score
+            
             Row = -1
             Valid = False
             while not Valid:
@@ -144,7 +146,9 @@ class Puzzle():
             self.__SymbolsLeft -= 1
             CurrentCell = self.__GetCell(Row, Column)
             
-            if Symbol == "B" and CurrentCell == "@":
+            symbolsNotAllowed = CurrentCell.GetSymbolsNotAllowed()
+            
+            if Symbol == "B" and CurrentCell.GetSymbol() == "@":
                 Index = (self.__GridSize - Row) * self.__GridSize + Column - 1
                 
                 self.__Grid[Index] == Cell()
@@ -156,9 +160,17 @@ class Puzzle():
                 if AmountToAddToScore > 0:
                     self.__Score += AmountToAddToScore
                     
+            undoBool = input("Undo move with 3 points deduction -> input U, else input any").lower()
+            if undoBool == "u":
+                self.__Grid[Index] == CurrentCell
+                self.__SymbolsLeft += 1
+                self.__Score == initial_score - 3
+                CurrentCell.SetSymbolsNotAllowed(symbolsNotAllowed)
+                    
             if self.__SymbolsLeft == 0:
                 Finished = True
-            self.SavePuzzle()
+            
+            self.SavePuzzle(Filename)
         print()
         self.DisplayPuzzle()
         print()
@@ -290,7 +302,7 @@ class Puzzle():
                     my_file.write(f"{symbol}")
                 else:
                     my_file.write('')
-                my_file.write(f",{','.join(c.GetNotAllowedSymbols())}\n")
+                my_file.write(f",{','.join(c.GetSymbolsNotAllowed())}\n")
             my_file.write(f"{self.__Score}\n")
             my_file.write(f"{self.__SymbolsLeft}\n")
         
@@ -374,6 +386,15 @@ class Cell():
             return "-"
         else:
             return self._Symbol
+        
+    def GetSymbolsNotAllowed(self):
+        if self.IsEmpty():
+            return "-"
+        else:
+            return self.__SymbolsNotAllowed
+    
+    def SetSymbolsNotAllowed(self, sym):
+        self.__SymbolsNotAllowed = sym
 
     def IsEmpty(self):
         """
@@ -401,7 +422,7 @@ class Cell():
 
         """
         if self.IsEmpty() == False:
-            continue
+            print("Cell occupied")
         else:
             self._Symbol = NewSymbol
 
@@ -473,3 +494,4 @@ class BlockedCell(Cell):
 
 if __name__ == "__main__":
     Main()
+
